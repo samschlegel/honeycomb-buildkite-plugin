@@ -25,7 +25,7 @@ cat << EOF > /tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json
 }
 EOF
 
-${BUILDKITE_COMMAND}
+bash -c "${BUILDKITE_COMMAND}"
 
 export HONEYCOMB_END_TS_MILLIS=$(TZ=UTC date '+%s%3N')
 export HONEYCOMB_DURATION_MS=$((${HONEYCOMB_END_TS_MILLIS} - ${HONEYCOMB_START_TS_MILLIS}))
