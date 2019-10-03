@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "--- Running ${BUILDKITE_COMMAND} with tracing"
+
+export HONEYCOMB_SPAN_TIME=$(TZ=UTC date '+%FT%T.%3NZ')
+export HONEYCOMB_START_TS_MILLIS=$(TZ=UTC date '+%s%3N')
+
+cat << EOF > /tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json
+{
+  "time": "${HONEYCOMB_START_TS_MILLIS}",
+  "data": {
+    "buildkite.agent_name": "${BUILDKITE_AGENT_NAME}",
+    "buildkite.branch": "${BUILDKITE_BRANCH}",
+    "buildkite.build_id": "${BUILDKITE_BUILD_ID}",
+    "buildkite.build_number": "${BUILDKITE_BUILD_NUMBER}",
+    "buildkite.job_id": "${BUILDKITE_JOB_ID}",
+    "buildkite.pipeline_id": "${BUILDKITE_PIPELINE_ID}",
+    "buildkite.pipeline_slug": "${BUILDKITE_PIPELINE_SLUG}",
+    "buildkite.retry_count": "${BUILDKITE_RETRY_COUNT}",
+    "buildkite.step_id": "${BUILDKITE_STEP_ID}",
+    "name": "${BUILDKITE_LABEL}",
+    "service_name": "buildkite"
+  }
+}
+EOF
+
+${BUILDKITE_COMMAND}
+
+export HONEYCOMB_END_TS_MILLIS=$(TZ=UTC date '+%s%3N')
+export HONEYCOMB_DURATION_MS=$((${HONEYCOMB_END_TS_MILLIS} - ${HONEYCOMB_START_TS_MILLIS}))
+
+# Add duration
+jq -c ". + {data: {duration_ms: ${HONEYCOMB_DURATION_MS}}}" \
+  | curl "https://api.honeycomb.io/1/events/${BUILDKITE_PLUGIN_HONEYCOMB_DATASET_NAME}" \
+      -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY" -d @-

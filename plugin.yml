@@ -1,0 +1,15 @@
+name: Honeycomb
+description: Sends traces to honeycomb for debugging pipeline execution
+author: https://github.com/samschlegel
+requirements:
+  - curl
+  - jq
+configuration:
+  properties:
+    team_api_key:
+      type: string
+    dataset_name:
+      type: string
+  required:
+    - team_api_key
+    - dataset_name
