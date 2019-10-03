@@ -18,7 +18,11 @@ cat << EOF > /tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json
     "buildkite.pipeline_id": "${BUILDKITE_PIPELINE_ID}",
     "buildkite.pipeline_slug": "${BUILDKITE_PIPELINE_SLUG}",
     "buildkite.retry_count": "${BUILDKITE_RETRY_COUNT}",
-    "buildkite.step_id": "${BUILDKITE_STEP_ID}",
+    "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
+    "buildkite.parent.build_id": "${ORIG_BUILDKITE_BUILD_ID}",
+    "buildkite.parent.job_id": "${ORIG_BUILDKITE_JOB_ID}",
+    "buildkite.parent.pipeline_slug": "${ORIG_BUILDKITE_PIPELINE_SLUG}",
+    "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
     "name": "${BUILDKITE_LABEL}",
     "service_name": "buildkite"
   }
@@ -30,7 +34,7 @@ bash -c "${BUILDKITE_COMMAND}"
 export HONEYCOMB_END_TS_MILLIS=$(TZ=UTC date '+%s%3N')
 export HONEYCOMB_DURATION_MS=$((${HONEYCOMB_END_TS_MILLIS} - ${HONEYCOMB_START_TS_MILLIS}))
 
-# Add duration
-jq -c ". + {data: {duration_ms: ${HONEYCOMB_DURATION_MS}}}" \
+# Add duration, remove empty fields, and send
+jq -c ".data.duration_ms = ${HONEYCOMB_DURATION_MS} | delpaths([path(.data[] | select(.==\"\"))])" \
   | curl "https://api.honeycomb.io/1/events/${BUILDKITE_PLUGIN_HONEYCOMB_DATASET_NAME}" \
-      -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY" -d @-
+      -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY}" -d @-
