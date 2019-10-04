@@ -8,24 +8,21 @@ export HONEYCOMB_START_TS_MILLIS=$(TZ=UTC date '+%s%3N')
 
 cat << EOF > /tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json
 {
-  "time": "${HONEYCOMB_START_TS_MILLIS}",
-  "data": {
-    "buildkite.agent_name": "${BUILDKITE_AGENT_NAME}",
-    "buildkite.branch": "${BUILDKITE_BRANCH}",
-    "buildkite.build_id": "${BUILDKITE_BUILD_ID}",
-    "buildkite.build_number": "${BUILDKITE_BUILD_NUMBER}",
-    "buildkite.job_id": "${BUILDKITE_JOB_ID}",
-    "buildkite.pipeline_id": "${BUILDKITE_PIPELINE_ID}",
-    "buildkite.pipeline_slug": "${BUILDKITE_PIPELINE_SLUG}",
-    "buildkite.retry_count": "${BUILDKITE_RETRY_COUNT}",
-    "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
-    "buildkite.parent.build_id": "${ORIG_BUILDKITE_BUILD_ID}",
-    "buildkite.parent.job_id": "${ORIG_BUILDKITE_JOB_ID}",
-    "buildkite.parent.pipeline_slug": "${ORIG_BUILDKITE_PIPELINE_SLUG}",
-    "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
-    "name": "${BUILDKITE_LABEL}",
-    "service_name": "buildkite"
-  }
+  "buildkite.agent_name": "${BUILDKITE_AGENT_NAME}",
+  "buildkite.branch": "${BUILDKITE_BRANCH}",
+  "buildkite.build_id": "${BUILDKITE_BUILD_ID}",
+  "buildkite.build_number": "${BUILDKITE_BUILD_NUMBER}",
+  "buildkite.job_id": "${BUILDKITE_JOB_ID}",
+  "buildkite.pipeline_id": "${BUILDKITE_PIPELINE_ID}",
+  "buildkite.pipeline_slug": "${BUILDKITE_PIPELINE_SLUG}",
+  "buildkite.retry_count": "${BUILDKITE_RETRY_COUNT}",
+  "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
+  "buildkite.parent.build_id": "${ORIG_BUILDKITE_BUILD_ID}",
+  "buildkite.parent.job_id": "${ORIG_BUILDKITE_JOB_ID}",
+  "buildkite.parent.pipeline_slug": "${ORIG_BUILDKITE_PIPELINE_SLUG}",
+  "buildkite.parent.step_id": "${ORIG_BUILDKITE_STEP_ID}",
+  "name": "${BUILDKITE_LABEL}",
+  "service_name": "buildkite"
 }
 EOF
 
@@ -36,6 +33,8 @@ export HONEYCOMB_DURATION_MS=$((${HONEYCOMB_END_TS_MILLIS} - ${HONEYCOMB_START_T
 
 # Add duration, remove empty fields, and send
 cat "/tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json" \
-  | jq -c ".data.duration_ms = ${HONEYCOMB_DURATION_MS} | delpaths([path(.data[] | select(.==\"\"))])" \
+  | jq -c ".duration_ms = ${HONEYCOMB_DURATION_MS} | delpaths([path(.[] | select(.==\"\"))])" \
   | curl "https://api.honeycomb.io/1/events/${BUILDKITE_PLUGIN_HONEYCOMB_DATASET_NAME}" \
-      -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY}" -d @-
+      -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY}" \
+      -H "X-Honeycomb-Event-Time: ${HONEYCOMB_START_TS_MILLIS}" \
+      -d @-
