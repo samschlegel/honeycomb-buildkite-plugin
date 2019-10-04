@@ -35,6 +35,7 @@ export HONEYCOMB_END_TS_MILLIS=$(TZ=UTC date '+%s%3N')
 export HONEYCOMB_DURATION_MS=$((${HONEYCOMB_END_TS_MILLIS} - ${HONEYCOMB_START_TS_MILLIS}))
 
 # Add duration, remove empty fields, and send
-jq -c ".data.duration_ms = ${HONEYCOMB_DURATION_MS} | delpaths([path(.data[] | select(.==\"\"))])" \
+cat "/tmp/honeycomb_event_${BUILDKITE_JOB_ID}.json" \
+  | jq -c ".data.duration_ms = ${HONEYCOMB_DURATION_MS} | delpaths([path(.data[] | select(.==\"\"))])" \
   | curl "https://api.honeycomb.io/1/events/${BUILDKITE_PLUGIN_HONEYCOMB_DATASET_NAME}" \
       -H "X-Honeycomb-Team: ${BUILDKITE_PLUGIN_HONEYCOMB_TEAM_API_KEY}" -d @-
