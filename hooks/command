@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "--- Running ${BUILDKITE_COMMAND} with tracing"
+echo "--- Running \"${BUILDKITE_COMMAND}\" with tracing"
 
 export HONEYCOMB_SPAN_TIME=$(TZ=UTC date '+%FT%T.%3NZ')
 export HONEYCOMB_START_TS_MILLIS=$(TZ=UTC date '+%s%3N')
